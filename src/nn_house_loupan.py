@@ -24,28 +24,33 @@ sql = "INSERT INTO `tb_data_house` (`name`, `layout`, `area`, `address`, `price`
 
 error = 0
 succeed = 0
-for a in range(16):
-    url = 'https://nn.newhouse.fang.com/house/s/b9{}'.format(a+1)
+for a in range(33):
+    url = 'http://nn.loupan.com/xinfang/p{}'.format(a+1)
     print(url)
     data = requests.get(url)
-    data.encoding = 'gb2312'
+    data.encoding = 'utf-8'
     tx = data.text
     s=etree.HTML(tx)
-    houses = s.xpath('//*[@id="newhouse_loupai_list"]/ul/li')
+    houses = s.xpath('/html/body/div[7]/div[3]/div[3]/div[1]/ul/li')
     time.sleep(2)
 
     lists = []
     for house in houses:
         try:
-            name = house.xpath("./div/div[2]/div[1]/div[1]/a/text()")[0].strip()
-            layout = getArea(house.xpath("./div/div[2]/div[2]/a"))
-            area = house.xpath("./div/div[2]/div[2]/text()")[0].strip()
-            address = house.xpath("./div/div[2]/div[3]/div[1]/a/@title")[0].strip()
-            price = house.xpath("./div/div[2]/div[5]/span/text()")[0].strip()
-            unit = house.xpath("./div/div[2]/div[5]/em/text()")[0].strip()[0]
-            district = house.xpath("./div/div[2]/div[3]/div[1]/a/text()")[0].strip().split(']')[0]
-            type = 'fang.com'
-            url = house.xpath("./div/div[2]/div[1]/div[1]/a/@href")[0].strip()
+            name = house.xpath("./div[1]/h2/a/text()")[0].strip()
+            layout = getArea(house.xpath("./div[1]/div[2]/span[1]/a"))
+            address = house.xpath("./div[1]/div[1]/span/text()")[0].strip()
+            price = house.xpath("./div[2]/div[1]/span/text()")[0].strip()
+            unit = ''
+            area = '0'
+            if(price != '价格待定'):
+                area = house.xpath("./div[1]/div[2]/span[2]/a/text()")[0].strip()
+                unit = house.xpath("./div[2]/div[1]/text()[2]")[0].strip()
+            else:
+                price = '0'
+            district = address.split('-')[0]
+            type = 'loupan.com'
+            url = house.xpath("./a/@href")[0].strip()
             row = (name, layout, area, address, price, unit, datetime.today().strftime('%Y-%m-%d %H:%M:%S'), district, type, url)
             lists.append(row)
             print(row)

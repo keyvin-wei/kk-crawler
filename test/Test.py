@@ -1,50 +1,44 @@
+import requests
 from datetime import datetime
 
+import pymysql
 from lxml import etree
 import requests
 import time
-import pymysql
 
-config={
-    "host":"127.0.0.1",
-    "user":"root",
-    "password":"123456",
-    "database":"knowledge_db"
-}
-db = pymysql.connect(**config)
-cursor = db.cursor()
-sql = "INSERT INTO `tb_data_house` (`name`, `area`, `address`, `price`, `unit`, `create_time`) " \
-      "VALUES (%s,%s,%s,%s,%s,%s)"
 
-def crawlWeb():
-    url = 'https://nn.newhouse.fang.com/house/s/b93'
-    data = requests.get(url)
-    data.encoding = 'gb2312'
-    tx = data.text
+def getArea(vals):
+    tex = ""
+    for val in vals:
+        tex = tex + ',' + val.text
+    return tex
 
-    print("----------------")
-    s = etree.HTML(tx)
-    houses = s.xpath('//*[@id="newhouse_loupai_list"]/ul/li')
-    time.sleep(2)
+url = 'http://nn.loupan.com/xinfang/p1'
+print(url)
+data = requests.get(url)
+data.encoding = 'utf-8'
+tx = data.text
+s=etree.HTML(tx)
+houses = s.xpath('/html/body/div[7]/div[3]/div[3]/div[1]/ul/li')
+time.sleep(2)
 
-    lists = []
-    for house in houses:
-        try:
-            name = house.xpath("./div/div[2]/div[1]/div[1]/a/text()")[0].strip()
-            area = house.xpath("./div/div[2]/div[2]/a[1]/text()")[0].strip()
-            address = house.xpath("./div/div[2]/div[3]/div[1]/a/@title")[0].strip()
-            price = house.xpath("./div/div[2]/div[5]/span/text()")[0].strip()
-            unit = house.xpath("./div/div[2]/div[5]/em/text()")[0].strip()
-            row = (name, area, address, price, unit[0], datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
-            lists.append(row)
-            print(name+","+area+","+address+","+price+unit[0])
-        except:
-            print(111)
-    cursor.executemany(sql, lists)
-    db.commit()
-    cursor.close()
-    db.close()
-    print("DB插入完成：" + str(len(lists)))
-
-if __name__ == '__main__':
-    crawlWeb()
+lists = []
+for house in houses:
+    try:
+        name = house.xpath("./div[1]/h2/a/text()")[0].strip()
+        layout = getArea(house.xpath("./div[1]/div[2]/span[1]/a"))
+        address = house.xpath("./div[1]/div[1]/span/text()")[0].strip()
+        price = house.xpath("./div[2]/div[1]/span/text()")[0].strip()
+        unit = ''
+        area = '0'
+        if(price != '价格待定'):
+            area = house.xpath("./div[1]/div[2]/span[2]/a/text()")[0].strip()
+            unit = house.xpath("./div[2]/div[1]/text()[2]")[0].strip()
+        district = address.split('-')[0]
+        type = 'loupan.com'
+        url = house.xpath("./a/@href")[0].strip()
+        row = (name, layout, area, address, price, unit, datetime.today().strftime('%Y-%m-%d %H:%M:%S'), district, type, url)
+        lists.append(row)
+        print(row)
+    except Exception as e:
+        print("err:" + str(e))

@@ -24,7 +24,7 @@ sql = "INSERT INTO `tb_data_house` (`name`, `layout`, `area`, `address`, `price`
 
 error = 0
 succeed = 0
-for a in range(33):
+for a in range(35):
     url = 'http://nn.loupan.com/xinfang/p{}'.format(a+1)
     print(url)
     data = requests.get(url)
